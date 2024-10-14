@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kb.member.mapper.MemberMapper">
+
+    <resultMap id="memberResultMap"  type="com.kb.member.dto.Member">
+        <id property="uno" 				column="uno" />
+        <result property="userId"		column="userId" />
+        <result property="password"		column="password" />
+        <result property="name" 		column="name" />
+        <result property="nickname"     column="nickname"/>
+        <result property="gender"       column="gender"/>
+        <result property="profilePic" column="profilePic"/>
+        <collection property="authorities"
+                    javaType="arraylist"
+                    ofType="org.springframework.security.core.authority.SimpleGrantedAuthority"
+                    resultMap="authoritiesMap"/>
+    </resultMap>
+
+    <resultMap type="org.springframework.security.core.authority.SimpleGrantedAuthority" id="authoritiesMap">
+        <constructor>
+            <arg column="authority" javaType="string"/>
+        </constructor>
+    </resultMap>
+
+    <select id="selectMemberAll" resultMap="memberResultMap">
+        SELECT
+            uno, u.userId, password, name
+        FROM
+            user u
+            LEFT OUTER JOIN user_auth a ON u.userId = a.userId
+    </select>
+
+<!--    <select id="selectById" resultMap="memberResultMap" parameterType="string">-->
+<!--        SELECT-->
+<!--            mno, m.id, password, name, email, status, create_date, modify_date, a.authority-->
+<!--        FROM-->
+<!--            member m-->
+<!--            LEFT OUTER JOIN member_auth a ON m.id = a.id-->
+<!--        WHERE m.status = 'y' and m.id = #{id}-->
+<!--    </select>-->
+    <select id="selectById" resultType="com.kb.member.dto.Member" parameterType="string">
+    SELECT uno, userId, password, name, nickname, gender, profilePic
+    FROM User u
+    WHERE u.userId = #{userId}
+    </select>
+
+    <insert id="insertMember" parameterType="com.kb.member.dto.Member">
+        INSERT INTO User(userId, password, name, nickname, gender, profilePic)
+        VALUES(#{userId}, #{password}, #{name}, #{nickname}, #{gender} ,#{profilePic})
+    </insert>
+
+
+    <update id="updateMember" parameterType="com.kb.member.dto.Member">
+        UPDATE User
+        SET
+            nickname = #{nickname},
+            profilePic = #{profilePic}
+        WHERE uno = #{uno}
+    </update>
+
+
+    <update id="updatePassword" parameterType="com.kb.member.dto.Member">
+        UPDATE User
+        SET
+            password = #{password}
+        WHERE uno = #{uno}
+    </update>
+
+
+    <delete id="deleteAuth"  parameterType="com.kb.member.dto.Auth">
+        DELETE FROM  member_auth
+        WHERE id = #{id} AND authority = #{auth}
+    </delete>
+
+    <select id="selectByUno" resultType="com.kb.member.dto.Member" parameterType="long">
+        SELECT uno, userId, password, name, nickname, gender, profilePic
+        FROM User u
+        WHERE u.uno = #{uno}
+    </select>
+
+    <select id="findBuddiz" resultType="java.lang.Long" parameterType="long">
+        SELECT UB.uno
+        FROM User u
+            JOIN UserBuddiz AS UB ON u.uno = UB.uno
+        WHERE u.uno = #{uno}
+    </select>
+</mapper>

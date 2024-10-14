@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kb.board.mapper.BoardMapper">
+    <resultMap type="com.kb.board.dto.BoardCategory" id="boardCategoryResultMap">
+        <result property="type" column="type"/>
+        <result property="name" column="name"/>
+        <result property="level" column="level"/>
+        <result property="orderNo" column="order_no"/>
+    </resultMap>
+
+    <resultMap type="com.kb.board.dto.Board" id="boardResultMap">
+        <id property="nno" column="nno"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="readCount" column="read_count"/>
+        <result property="createdAt" column="createdAt"/>
+        <result property="lan" column="lan"/>
+        <result property="thumb_img" column="thumb_img"/>
+    </resultMap>
+
+
+    <resultMap type="com.kb.board.dto.Board" id="boardDetailResultMap">
+        <result property="nno" column="nno"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="createdAt" column="createdAt"/>
+        <result property="lan" column="lan"/>
+        <result property="thumb_img" column="thumb_img"/>
+        <result property="readCount" column="readCount"/>
+    </resultMap>
+
+
+
+    <!-- board 카테고리 가져오는 select문 -->
+    <select id="selectBoardCategory" resultMap="boardCategoryResultMap">
+        select * from board_category order by order_no;
+    </select>
+
+    <!--
+    ■ 리스트 구현 - 필수 2종 세트
+    selectBoardList : list를 뽑을때 사용하는데, 페이징, 검색 조건이 모두 포함된 동적 쿼리, 컬럼의 갯수는 꼭 보여줄 것만 선언
+    selectBoardCount : selectBoardList와 쌍으로 갯수를 세오는 Count문, 검색조건이 selectBoardList 일치 해야함
+    -->
+    <select id="selectBoardList" parameterType="com.kb.board.dto.BoardParam" resultMap="boardResultMap">
+     <![CDATA[
+        select
+            title, content, createdAt, thumb_img, lan, nno
+        from Notice ]]>
+        where lan=#{lan}
+        order by createdAt DESC limit ${limit} offset ${offset}
+
+    </select>
+
+    <select id="selectBoardCount" parameterType="com.kb.board.dto.BoardParam" resultType="int">
+        select count(nno)
+        from Notice
+    </select>
+
+    <!-- 상세보기 용도, 모든 인자를 가져와야한다. -->
+    <select id="selectBoardByNno" parameterType="long" resultMap="boardDetailResultMap">
+        select
+            nno, title, content, createdAt, lan, thumb_img
+        from Notice
+        where nno=#{nno}
+    </select>
+
+    <!-- 게시판 insert용, selectKey(insert 이후의 key를 받아오는 쿼리문) 추가한 버전 -->
+    <insert id="insertBoard" parameterType="com.kb.board.dto.Board">
+        <selectKey keyProperty="nno" resultType="int" order="AFTER">
+            SELECT @@identity as nno
+        </selectKey>
+        insert into board (nno, member_mno, board_category_type, title, content)
+        values(default, #{mno}, #{type}, #{title}, #{content})
+    </insert>
+
+
+    <update id="updateBoard" parameterType="com.kb.board.dto.Board">
+        update board set
+            board_category_type=#{type}, title=#{title}, content=#{content}, modify_date = current_timestamp
+        where nno = #{nno}
+    </update>
+
+
+
+    <!-- 게시글 삭제용 update문 -->
+    <update id="deleteBoard" parameterType="long">
+        update board set
+            status = 'n'
+        where nno = #{nno}
+    </update>
+
+</mapper>
